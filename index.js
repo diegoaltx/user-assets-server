@@ -27,7 +27,9 @@ function handleCollection(req, res, next) {
     const collectionConfig = config.collections[collection];
 
     if(collectionConfig === undefined) {
-        res.status(404).send('Unknown collection');
+        let message = 'Unknown collection: ' + collection;
+        res.status(404).send(message);
+        console.log(message)
         return;
     }
 
@@ -36,9 +38,31 @@ function handleCollection(req, res, next) {
     next();
 }
 
-function handleUpload(req, res) {
-    const upload = multer({dest: config.tempDestination});
-    res.send('OK');
+function handleUpload(req, res, next) {
+    const config = req.app.locals.config;
+
+    const upload = multer({
+        dest: config.tempDestination
+    })
+    .single('file');
+
+    upload(req, res, err => {
+        if(err) {
+            let message = 'Error uploading the file';
+            res.status(500).send(message);
+            console.log(message)
+            return;
+        }
+
+        if(!req.file) {
+            let message = 'A file field is required';
+            res.status(400).send(message);
+            console.log(message)
+            return;
+        }
+
+        next();
+    });
 }
 
 module.exports = server;
