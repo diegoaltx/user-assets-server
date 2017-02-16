@@ -27,9 +27,7 @@ function handleCollection(req, res, next) {
     const collectionConfig = config.collections[collection];
 
     if(collectionConfig === undefined) {
-        let message = 'Unknown collection: ' + collection;
-        res.status(404).send(message);
-        console.log(message)
+        res.status(404).send('Unknown collection: ' + collection);
         return;
     }
 
@@ -48,16 +46,12 @@ function handleUpload(req, res, next) {
 
     upload(req, res, err => {
         if(err) {
-            let message = 'Error uploading the file';
-            res.status(500).send(message);
-            console.log(message)
+            res.status(500).send('Error uploading the file');
             return;
         }
 
         if(!req.file) {
-            let message = 'A file field is required';
-            res.status(400).send(message);
-            console.log(message)
+            res.status(400).send('A file field is required');
             return;
         }
 
