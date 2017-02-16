@@ -1,0 +1,22 @@
+{
+  "name": "user-assets-server",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/diegoteixeir4/user-assets-server.git"
+  },
+  "author": "Diego Teixeira <diegoteixeir4@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/diegoteixeir4/user-assets-server/issues"
+  },
+  "homepage": "https://github.com/diegoteixeir4/user-assets-server#readme",
+  "dependencies": {
+    "multer": "^1.3.0"
+  }
+}
