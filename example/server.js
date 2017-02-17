@@ -2,9 +2,27 @@ const server = require('../index');
 
 const options = {
     collections: {
-        dashcover: {},
-        dashpicture: {},
-        userpicture: {},
+        dashcover: {
+            accept: [
+                'image/jpg',
+                'image/png',
+                'image/gif'
+            ]
+        },
+        dashpicture: {
+            accept: [
+                'image/jpg',
+                'image/png',
+                'image/gif'
+            ]
+        },
+        userpicture: {
+            accept: [
+                'image/jpg',
+                'image/png',
+                'image/gif'
+            ]
+        },
     }
 };
 
