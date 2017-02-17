@@ -1,0 +1,3 @@
+I'm a text file for tests.
+That's it.
+Bye! ;p
