@@ -92,7 +92,7 @@ function handleUpload(req, res, next) {
 
 function fileFilter(req, file, cb) {
     const accept = req.collection.accept;
-    const isValid = (accept.indexOf(file.mimetype) !== -1);
+    const isValid = (!accept || accept.indexOf(file.mimetype) !== -1);
 
     if(!isValid) {
         let error = new Error('File type is not acceptable by collection');
