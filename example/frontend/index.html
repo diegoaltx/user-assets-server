@@ -1,0 +1,40 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>Upload Example</title>
+</head>
+
+<body>
+  <h1>Upload Example</h1>
+  <form id="form" enctype="multipart/form-data">
+    <label for="file">File</label>
+    <input type="file" id="file" name="file" />
+    <button type="submit" id="button">Upload</button>
+  </form>
+
+  <h2>Result</h2>
+  <div id="result">Submit the form.</div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('form').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        var form = e.target;
+        var data = new FormData(form);
+        var request = new XMLHttpRequest();
+
+        request.onreadystatechange = function() {
+          var result = request.status + ' - ' + request.responseText;
+          document.getElementById("result").innerText = result;
+        };
+
+        request.open('POST', 'http://localhost:3000/avatar');
+        request.send(data);
+      });
+    });
+  </script>
+</body>
+
+</html>

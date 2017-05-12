@@ -1,17 +1,34 @@
-const server = require('../index');
+const http = require('http');
+const sharp = require('sharp');
+const userAssets = require('../index');
 
-const options = {
-    collections: {
-        images: {
-            accept: ['image/jpg', 'image/png', 'image/gif']
-        },
-        anything: {},
-        docs: {
-            accept: ['text/plain']
-        },
-    }
-};
-
-server(options).listen(3000, () => {
-    console.log('Listening at port 3000...');
+const app = userAssets({
+  collections: {
+    'avatar': {
+      accept: ['image/jpg', 'image/png'],
+      variations: {
+        thumb: createThumb
+      }
+    },
+    'cover': {
+      accept: ['image/jpg', 'image/png'],
+      variations: {
+        thumb: createThumb
+      }
+    },
+  }
 });
+
+function createThumb(originalPath, variationPath) {
+  sharp(originalPath)
+    .resize(200, 200)
+    .toFile(variationPath)
+    .catch((err) => console.log(err));
+}
+
+app.use('/frontend', require('express').static('frontend'));
+
+http.createServer(app)
+  .listen(3000, () => {
+    console.log('Listening at port 3000...');
+  });
