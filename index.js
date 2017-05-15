@@ -5,7 +5,6 @@ const cors = require('cors');
 
 var defaults = {
   destination: 'uploads',
-  tempDestination: 'temp',
   collections: {}
 };
 
@@ -58,7 +57,11 @@ function validateCollection(req, res, next) {
     return;
   }
 
-  req.collection = Object.assign({name: collection}, collectionConfig);
+  req.collection = Object.assign({
+    name: collection,
+    url: collection,
+    path: `${config.destination}/${collection}`
+  }, collectionConfig);
 
   next();
 }
@@ -67,7 +70,7 @@ function handleUpload(req, res, next) {
   const config = req.app.locals.config;
 
   const upload = multer({
-    dest: config.tempDestination,
+    storage: multer.memoryStorage(),
     fileFilter: fileFilter
   })
   .single('file');
@@ -111,40 +114,128 @@ function saveFile(req, res) {
   const collection = req.collection;
   const file = req.file;
 
-  const timestamp = (new Date()).getTime();
-  const name = [timestamp, file.filename].join('_');
+  const uniqueName = generateUniqueFilename();
   const extension = getExtension(file);
-  const filename = [name, extension].join('');
 
-  const originalUrl = [collection.name, filename].join('/');
-  const originalPath = [config.destination, originalUrl].join('/');
+  const promises = [];
 
-  const absoluteUrls = {};
+  // save original file
+  if(collection.saveOriginal !== false) {
+    promises.push(saveOriginal({
+      collection,
+      file,
+      uniqueName,
+      extension
+    }));
+  }
 
-  fs.rename(file.path, originalPath, err => {
-    if(err) {
+  // save variations
+  if(collection.variations) {
+    promises.push(...saveVariations({
+      collection,
+      file,
+      uniqueName,
+      extension
+    }));
+  }
+
+  Promise.all(promises)
+    .then((variations) => {
+      const result = {};
+
+      variations.forEach((variation) => {
+        if(!variation.url) return;
+        result[variation.name] = variation.url;
+      })
+
+      res.status(200).send(result);
+    })
+    .catch((err) => {
       res.status(500).send('Error saving the file');
-      return;
-    }
+      console.log(err);
+    });
 
-    absoluteUrls.original = [getAbsoluteBaseUrl(req), originalUrl].join('/');
+}
 
-    if(collection.variations) {
-      for(let variation in collection.variations) {
-        let variationName = [name, variation].join('_');
-        let variationFilename = [variationName, extension].join('');
-        let variationUrl = [collection.name, variationFilename].join('/');
-        let variationPath = [config.destination, variationUrl].join('/');
-        let fn = collection.variations[variation];
-
-        absoluteUrls[variation] = [getAbsoluteBaseUrl(req), variationUrl].join('/');
-
-        fn(originalPath, variationPath);
+function saveVariation(options) {
+  return new Promise((resolve, reject) => {
+    const done = (err, res) => {
+      if(err) {
+        reject(err);
+        return;
       }
-    }
 
-    res.status(200).send(absoluteUrls);
+      let data;
+      let extension;
+
+      if(res instanceof Buffer || res instanceof String) {
+        data = res;
+        extension = options.extension;
+      } else {
+        data = res.data;
+        extension = (res.extension ? res.extension : options.extension);
+      }
+
+      const uniqueName = `${options.uniqueName}_${options.variation.name}`;
+      const filename = `${uniqueName}${extension}`;
+      const url = `${options.collection.url}/${filename}`;
+      const path = `${options.collection.path}/${filename}`;
+
+      const destination = fs.createWriteStream(path);
+      destination.write(options.file.buffer);
+      destination.end();
+
+      destination.on('finish', () => {
+        resolve({name: options.variation.name, url});
+      });
+
+      destination.on('error', reject);
+    };
+
+    const handler = options.variation.handler;
+    const buffer = options.file.buffer;
+
+    handler({buffer}, done);
   });
+}
+
+function saveVariations(options) {
+  const promises = [];
+
+  for(let name in options.collection.variations) {
+    let handler = options.collection.variations[name];
+    let variation = {name, handler};
+
+    let variationOptions = Object.assign({}, options, {variation});
+
+    promises.push(saveVariation(variationOptions));
+  }
+
+  return promises;
+}
+
+function saveOriginal(options) {
+  return new Promise((resolve, reject) => {
+    const filename = `${options.uniqueName}${options.extension}`;
+    const url = `${options.collection.url}/${filename}`;
+    const path = `${options.collection.path}/${filename}`;
+
+    const destination = fs.createWriteStream(path);
+    destination.write(options.file.buffer);
+    destination.end();
+
+    destination.on('finish', () => {
+      resolve({name: 'original', url});
+    });
+
+    destination.on('error', reject);
+  });
+}
+
+function generateUniqueFilename() {
+  const timestamp = (new Date()).getTime();
+  const uuid = require('crypto').randomBytes(16).toString('hex');
+  return `${timestamp}_${uuid}`;
 }
 
 function getExtension(file) {

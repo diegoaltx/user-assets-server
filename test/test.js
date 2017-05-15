@@ -64,16 +64,8 @@ it('should upload any mimetype if collection.accept is not defined', (done) => {
 it('should process collection variations', (done) => {
   const localOptions = Object.assign({}, options);
 
-  function variationTouched(originalPath, variationPath) {
-    const original = fs.createReadStream(originalPath);
-    const variation = fs.createWriteStream(variationPath);
-
-    variation.on('close', () => {
-      expect(fs.existsSync(variationPath)).to.be.true;
-      done();
-    });
-
-    original.pipe(variation);
+  function variationTouched(options, done) {
+    done(null, options.buffer);
   }
 
   localOptions.collections.images.variations = {
@@ -85,5 +77,8 @@ it('should process collection variations', (done) => {
   chai.request(localInstance)
   .post('/images')
   .attach('file', fs.readFileSync(__dirname + '/test.png'), 'test.png')
-  .end();
+  .end((err, res) => {
+    expect(res.body).to.include.keys('touched');
+    done(err);
+  });
 });
