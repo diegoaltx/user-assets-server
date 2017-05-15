@@ -182,7 +182,7 @@ function saveVariation(options) {
       const path = `${options.collection.path}/${filename}`;
 
       const destination = fs.createWriteStream(path);
-      destination.write(options.file.buffer);
+      destination.write(data);
       destination.end();
 
       destination.on('finish', () => {
