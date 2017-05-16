@@ -114,6 +114,7 @@ function saveFile(req, res) {
   const collection = req.collection;
   const file = req.file;
 
+  const baseUrl = getAbsoluteBaseUrl(req);
   const uniqueName = generateUniqueFilename();
   const extension = getExtension(file);
 
@@ -145,8 +146,8 @@ function saveFile(req, res) {
 
       variations.forEach((variation) => {
         if(!variation.url) return;
-        result[variation.name] = variation.url;
-      })
+        result[variation.name] = `${baseUrl}/${variation.url}`;
+      });
 
       res.status(200).send(result);
     })
